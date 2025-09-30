@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ermd"
+version = "0.1.0"
+description = "Async backend for file and directory management using FastAPI"
+authors = [
+    { name = "Ivan Derkach", email = "dsp_shp@icloud.com" }
+]
+requires-python = ">=3.12,<4"
+dependencies = [
+    "fastapi>=0.95.0",
+    "uvicorn[standard]>=0.22.0"
+]
+
+[tool.setuptools.packages.find]
+include = ["*"]
+
+[tool.setuptools.package-data]
+"*" = ["py.typed", "client/**"]
+
+[project.scripts]
+ermd = "ermd.server.main:app"

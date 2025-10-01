@@ -9,41 +9,27 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import HTMLResponse
 
-from ermd.server.utils import parse_markdown, Entity, Relation, order_relations
+from ermd.server.utils import parse_markdown
 
 
 logger = logging.getLogger(__name__)
 
+def create_app() -> FastAPI:
+    static = Path(__file__).parent.parent / "client/build/static"
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    app.state.entities = {}
-    app.state.relations = []
+    app = FastAPI()
 
-    yield
+    app.mount("/static", StaticFiles(directory=static, html=True, check_dir=False), name="static")
 
-app = FastAPI()
+    @app.get("/")
+    async def root():
+        return HTMLResponse((static.parent / "index.html").read_text())
 
-# app.add_middleware(
-#     CORSMiddleware,
-#     allow_origins=[
-#         # "*",
-#         "http://localhost:3000"
-#     ],  # фронт адрес
-#     allow_credentials=True,
-#     allow_methods=["*"],
-#     allow_headers=["*"],
-# )
+    @app.post("/api/parse")
+    async def parse(text: str = Body(..., embed=True)):
+        return parse_markdown(text)
 
-static = Path(__file__).parent.parent / "client/build/static"
+    return app
 
-app.mount("/static", StaticFiles(directory=static, html=True, check_dir=False), name="static")
 
-@app.get("/")
-async def root():
-    return HTMLResponse((static.parent / "index.html").read_text())
-
-@app.post("/api/parse")
-async def parse(text: str = Body(..., embed=True)):
-    app.state.entities, app.state.relations = parse_markdown(text)
-    return order_relations(app.state.relations)
+app = create_app()

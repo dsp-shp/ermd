@@ -10,9 +10,16 @@ import re
 
 
 logger = logging.getLogger(__name__)
+
+
 entities: dict[str, Entity] = {}
+""" Finally formed entities """
+
 relations: list[Relation] = []
+""" Finally formed relations """
+
 relations_raw: list[str] = []
+""" List of relation strings found during entity creation to parse after """
 
 
 class EntityFieldKey(Enum):
@@ -21,11 +28,13 @@ class EntityFieldKey(Enum):
     FOREIGN = "FK"
     # Add support for FK1/2/3/...
 
+
 class EntityType(Enum):
     """ Type of entity """
     TABLE = "TABLE"
     VIEW = "VIEW"
     MATVIEW = "MATVIEW"
+
 
 class RelationType(Enum):
     """ One-side relation """
@@ -73,12 +82,8 @@ class EntityField:
 
         _relations_raw = []
         for x in reversed([*re.finditer(r'---.+?---[^\ \n]+', _s)]):
-            # if len(_relations) > 1:
-            #     raise ValueError(f"for now only one relation can be provided for a field \"{name}\"")
             _relations_raw.append(x.group().strip())
             _s = _s[:x.start()] + _s[x.end():]
-        if _relations_raw:
-            print(_relations_raw)
 
         descs = []
         for x in reversed([*re.finditer(r'\".+?\"', _s)]):
@@ -124,25 +129,18 @@ class EntityField:
         else:
             l_type, r_type = None, None
             _type = self.relations[0].from_type if self.relations else None
-            print([self.entity.name, self.id])
             if self.id != None and self.id % 2 == 0:
                 l_type = _type
             else:
                 r_type = _type
 
         d = {
-            # "entity": self.entity,
             "name": self.name,
             "keys": list(sorted(self.keys, key=lambda x: ("PK", "FK").index(x.value))),
             "data_type": self.data_type,
             "desc": self.desc,
-            # "relations": [x.to_dict() for x in self.relations],
             "l_type": l_type,
             "r_type": r_type
-            # "from_type": str(self.relation.from_type.value) if self.relation else None,
-            # "to_type": str(self.relation.to_type.value) if self.relation else None,
-            # "to_entity": (self.relation.to_field.entity.name + "." + self.relation.to_field.name) if self.relation else None,
-            # "side": ("right" if self.relation.from_field.entity == self.entity else "left") if self.relation else None,
         }
         return d
 
@@ -169,6 +167,7 @@ class EntityField:
                     for x in r.to_field.entity.data.values():
                         entities += x.findall(side, entities, root, level+1)
         return entities
+
 
 class Entity(UserDict):
     """ Entity """
@@ -304,9 +303,8 @@ class Relation:
 
     @classmethod
     def from_string(cls, s: str) -> t.Self:
-        print(s)
-        print(s.strip("").split("---"))
         global entities
+
         from_full, rel, to_full = s.strip("").split("---")
         rel = rel.strip("( )")
         from_entity, from_field = from_full.strip().lower().split(".")
@@ -327,8 +325,6 @@ class Relation:
         rel, desc, *_ = re.sub(r"\s+", " ", rel).split(" ", 1) + [None, None]
         if desc:
             desc = desc.strip('"')
-        # desc, *_ = re.findall(r"\".+?\"", rel) + [None, None]
-        # rel = re.sub(r"\(.+?\)", "", rel).strip()
 
         from_type, to_type, *_ = [RelationType(x.upper()) for x in rel.split(":")]
 
@@ -339,7 +335,6 @@ class Relation:
             to_type,
             desc if desc else None,
         ) # type: ignore
-        # from_field.relation, to_field.relation = rel, -rel
         if hash(rel) not in [hash(x) for x in from_field.relations]:
             from_field.relations.append(rel)
         if hash(rel) not in [hash(x) for x in to_field.relations]:
@@ -348,8 +343,6 @@ class Relation:
         return rel
 
     def to_dict(self) -> dict[str, t.Any]:
-        # TODO: find entity with most relations and order their relations
-        # even to left (inverted) and odd to right side
         return {
             "from": f"{self.from_field.entity.name}.{self.from_field.name}",
             "from_type": self.from_type.value,
@@ -358,15 +351,11 @@ class Relation:
             "to_type": self.to_type.value,
         }
 
-def order_relations(relations: list[Relation]) -> dict:
+
+def order_relations() -> dict[str, t.Any]:
     global entities
-    # entities = {}
-    # for x in relations:
-    #     for y in (x.from_field, x.to_field):
-    #         e = y.entity
-    #         if e not in entities:
-    #             entities[e] = []
-    #         entities[e].append(x)
+    global relations
+
     map_entities = {x: [
         (y if y.from_field.entity == x else -y) for y in x.relations
     ] for x in entities.values()}
@@ -402,13 +391,17 @@ def order_relations(relations: list[Relation]) -> dict:
         x.from_field.relation = x.to_field.relation = x
 
     return {
-        "entities": [x.to_dict() for x in sorted(entities.values(), key=lambda x: x.level if hasattr(x, 'level') else 0)],
+        "entities": [x.to_dict() for x in sorted(
+            entities.values(), key=lambda x: x.level if hasattr(x, 'level') else 0
+        )],
         "relations": [x.to_dict() for x in list(res_relations.values())]
     }
 
 
-def parse_markdown(s: str) -> tuple[dict[str, Entity], list[Relation]]:
-    """ ... """
+def parse_markdown(s: str) -> dict[str, t.Any]:
+    """
+    Parse input markdown text and return a dictionary of entities and relations.
+    """
     global relations_raw
     global relations
     global entities
@@ -423,21 +416,15 @@ def parse_markdown(s: str) -> tuple[dict[str, Entity], list[Relation]]:
     relations_raw = []
     relations = []
     entities = {}
-    found = re.findall(r"""(?m)^([\w\d\ \-\,\.\"\@]+\n(?:- .*(?:\n|$))*)""", s, re.MULTILINE)
-    print(found)
-    for x in found:
+
+    for x in re.findall(
+        r"""(?m)^([\w\d\ \-\,\.\"\@]+\n(?:- .*(?:\n|$))*)""", s, re.MULTILINE
+    ):
         y = Entity.from_string(x)
         entities[y.name] = y
 
-    relations += [
-        Relation.from_string(x) for x in re.findall(r"[^\ \n]+\..+---.+---.+\..+", s, re.MULTILINE) + relations_raw
-    ]
-    return entities, relations
-# parse_markdown("""
-# customers
-# - [PK] id @int "Идентификатор пользователя"
-# - gender_id @str "Идентификатор пола" ---1:1---genders.id
+    relations += [Relation.from_string(x) for x in re.findall(
+        r"[^\ \n]+\..+---.+---.+\..+", s, re.MULTILINE
+    ) + relations_raw]
 
-# genders
-# - id @int "Гендер"
-# """)
+    return order_relations()

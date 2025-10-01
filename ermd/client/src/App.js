@@ -15,6 +15,7 @@ const TableNode = ({ data }) => {
       style={{
         border: "3px solid #777",
         borderRadius: 16,
+        margin: 20,
         padding: 10,
         background: "white",
         fontSize: 14,
@@ -60,7 +61,7 @@ const TableNode = ({ data }) => {
         style={{ width: "100%", padding: "0px", borderCollapse: "collapse" }}
       >
         <tbody>
-          {console.log(data.fields)}
+          {/* {console.log(data.fields)}*/}
           {data.fields.map(
             ({ name, keys, data_type, desc, l_type, r_type }) => {
               const handleId = `${data.name}-${name}`;
@@ -69,6 +70,7 @@ const TableNode = ({ data }) => {
                   key={name}
                   style={{
                     position: "relative",
+                    // display: "flex",
                     borderBottom:
                       name === data.fields[data.fields.length - 1].name
                         ? "none"
@@ -80,24 +82,28 @@ const TableNode = ({ data }) => {
                       margin: 0,
                       padding: 0,
                       width: 0,
+                      flexGrow: 1,
+                      height: "100%",
                       position: "relative",
                     }}
                   >
                     <div
                       style={{
-                        padding: "5px 0px 5px 10px",
+                        // padding: "5px 0px 5px 10px",
                         display: "flex",
+                        alignItems: "center",
+                        flexGrow: 1,
                         justifyContent: "end",
                         fontFamily: "Archivo, sans-serif",
                         fontSize: "16px",
                         textAlign: "right",
                         width: "18px",
-                        height: "10px",
+                        height: "100%",
                         fontWeight: "1000",
                         position: "absolute",
                         visibility: l_type ? "visible" : "hidden",
-                        left: "-45px",
-                        top: "-8px",
+                        top: 0,
+                        left: "-35px",
                         background: "transparent",
                       }}
                     >
@@ -192,27 +198,38 @@ const TableNode = ({ data }) => {
                         : desc
                       : ""}
                   </td>
-                  <td style={{ padding: 0, width: 0, position: "relative" }}>
+                  <td
+                    style={{
+                      padding: 0,
+                      width: 0,
+                      flexGrow: 1,
+                      height: "100%",
+                      position: "relative",
+                    }}
+                  >
                     <div
                       style={{
                         display: "flex",
+                        alignItems: "center",
+                        flexGrow: 1,
                         justifyContent: "start",
                         fontFamily: "Archivo, sans-serif",
                         width: "18px",
                         fontSize: "16px",
                         textAlign: "left",
                         fontWeight: "1000",
+                        height: "100%",
+                        top: 0,
                         position: "absolute",
                         visibility: r_type ? "visible" : "hidden",
                         right: "-31px",
-                        top: -4,
                         background: "transparent",
                       }}
                     >
                       <p
                         style={{
                           margin: 0,
-                          height: "16px",
+                          // height: "16px",
                           padding: "5px 5px 5px 4px",
                           background: "white",
                         }}
@@ -286,7 +303,7 @@ async function elkLayout(nodes, edges) {
       "elk.algorithm": "org.eclipse.elk.mrtree",
       "elk.direction": "RIGHT",
       "elk.mrtree.direction": "RIGHT",
-      "elk.spacing.nodeNode": "50",
+      "elk.spacing.nodeNode": "70",
       "elk.layered.spacing.nodeNodeBetweenLayers": "50",
       "elk.edgeRouting": "POLYLINE",
     },
@@ -304,7 +321,7 @@ async function elkLayout(nodes, edges) {
   };
 
   const layoutedGraph = await elk.layout(graph);
-  console.log("All edges from ELK layout:", layoutedGraph.edges);
+  // console.log("All edges from ELK layout:", layoutedGraph.edges);
 
   // Проставляем позиции в узлы
   const layoutedEdgesWithBendPoints = layoutedGraph.edges.map((edge) => {
@@ -355,7 +372,7 @@ const ERDiagramEditor = () => {
     }
     const timer = setTimeout(() => {
       setLoading(true);
-      fetch("http://127.0.0.1:4765/api/parse", {
+      fetch("/api/parse", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: inputText }),
@@ -422,9 +439,9 @@ const ERDiagramEditor = () => {
         />
       </div>
       <div style={{ flex: 1 }}>
-        {loading && <div>Загрузка...</div>}
+        {/* {loading && <div>Загрузка...</div>}*/}
         {error && <div style={{ color: "red" }}>Ошибка: {error}</div>}
-        {console.log("Edges для ReactFlow:", elements.edges)}
+        {/* {console.log("Edges для ReactFlow:", elements.edges)}*/}
         {!loading && !error && elements.nodes.length > 0 && (
           // <ArrowMarker />
           <ReactFlow

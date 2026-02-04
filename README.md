@@ -4,6 +4,17 @@ ERMD is a tool for rendering ER diagrams using a Markdown-like language.
 
 ![](.src/UI.png)
 
+## 🛠️ Installation
+
+You can simply install it via docker with this one-liner:
+```bash
+docker build https://github.com/dsp-shp/ermd.git -t ermd && docker run -p 8080:80 -d ermd
+```
+
+And then open it at localhost page in your browser.
+
+## 🚀 Usage
+
 Let’s look at how to work with it using the example of a “snowflake” schema diagram.
 
 Let’s define the name, type, and comment for the fact entity.

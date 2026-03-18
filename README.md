@@ -8,7 +8,7 @@ ERMD is a tool for rendering ER diagrams using a Markdown-like language.
 
 You can simply install it via docker with this one-liner:
 ```bash
-docker build https://github.com/dsp-shp/ermd.git -t ermd && docker run -p 8080:80 -d ermd
+docker build https://github.com/dsp-shp/ermd.git -t ermd && docker run -p 80:8080 -d ermd
 ```
 
 And then open it at localhost page in your browser.
